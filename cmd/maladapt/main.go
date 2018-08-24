@@ -1,20 +1,20 @@
 package main
 
 import (
+	"github.com/go-chi/chi"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
+	"github.com/worlvlhole/maladapt/internal/requests"
 	"log/syslog"
-	"github.com/go-chi/chi"
 	"net/http"
 	"os"
-	"github.com/worlvlhole/maladapt/internal/requests"
+	"strconv"
 )
 
 func main() {
-	addr := os.Getenv("MALADAPT_BIND_ADDR")
 
+	//Setup Logger
 	log.SetFormatter(&log.JSONFormatter{})
-
 	hook, err := lSyslog.NewSyslogHook("", "", syslog.LOG_INFO, "maladapt")
 	if err != nil {
 		log.Fatal("could not setup syslog logger")
@@ -27,14 +27,28 @@ func main() {
 		DisableTimestamp: true,
 	}
 
+	//Environment Variables
+	uploadMaxFileSize, err := strconv.ParseInt(os.Getenv("MALADAPT_MAX_UPLOAD_SIZE"), 10, 64)
+	if err != nil {
+		log.Fatalf("could not parse `ADMIN_LDAP_PORT`: %v", err)
+	}
+
+	addr := os.Getenv("MALADAPT_BIND_ADDR")
+	if addr == "" {
+		log.Fatal("could not fined `MALADAPT_BIND_ADDR`: %v", err)
+	}
+	quarantined_zone := os.Getenv("MALADAPT_QUARANTINE_PATH")
+
 	r := chi.NewRouter()
 	r.Use(requests.NewStructuredLogger(requestLogger))
 
-	service := requests.NewMaladaptService()
+	//Create MaladaptService
+	service := requests.NewMaladaptService(quarantined_zone, uploadMaxFileSize)
 
 	r.Route("/file", func(r chi.Router) {
 		r.Post("/scan", service.UploadFile) // POST /file/scan
 	})
 
-	http.ListenAndServe(addr, r)
+	log.WithFields(log.Fields{"bindaddress": addr}).Info("Server Started")
+	log.Fatal(http.ListenAndServe(addr, r))
 }
