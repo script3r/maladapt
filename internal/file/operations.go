@@ -1,7 +1,7 @@
 package file
 
 type Fs interface {
-	Copy(src string, remote string) error
-	Move(src string, remote string) error
-	Stat(src string, remote string) error
+	Copy(src string, dst string) error
+	Move(src string, dst string) error
+	Stat(src string, dst string) error
 }
