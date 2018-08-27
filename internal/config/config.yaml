@@ -1,0 +1,5 @@
+
+maladapt:
+  bind_address: "localhost:3333"
+  max_upload_size: 24000
+  quarantine_path: "/Users/spencerm/Documents/ulti_dev/quarantine"
