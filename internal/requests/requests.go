@@ -36,12 +36,11 @@ func (m *maladaptService) UploadFile(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func NewMaladaptService(quarantineZone string, uploadMaxFileSize int64) *maladaptService {
+func NewMaladaptService(quarantineZone string) *maladaptService {
 	return &maladaptService{
 		quarantine: file.NewQuarantineAdmin(
 			quarantineZone,
 			file.NewZipQuarantiner(quarantineZone),
 		),
-		uploadMaxFileSize: uploadMaxFileSize,
 	}
 }

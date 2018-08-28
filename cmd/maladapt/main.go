@@ -33,7 +33,7 @@ func main() {
 	}
 
 	//Create MaladaptService
-	service := requests.NewMaladaptService(config.QuarantinePath, config.MaxUploadSize)
+	service := requests.NewMaladaptService(config.QuarantinePath)
 
 	//Create Router
 	r := chi.NewRouter()
