@@ -1,17 +1,18 @@
 package requests
 
 import (
-	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"github.com/worlvlhole/maladapt/internal/file"
 	"net/http"
 )
 
 type maladaptService struct {
-	quarantine        *file.QuarantineAdmin
-	uploadMaxFileSize int64
+	quarantine *file.QuarantineAdmin
 }
 
 func (m *maladaptService) UploadFile(w http.ResponseWriter, r *http.Request) {
+	log := log.WithFields(log.Fields{"func": "UploadFile"})
+
 	files, present := r.MultipartForm.File["file"]
 	if !present {
 		WriteError(w, http.StatusBadRequest, InvalidKeySupplied)
@@ -19,21 +20,25 @@ func (m *maladaptService) UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, fileHeader := range files {
+
 		file, err := fileHeader.Open()
 		if err != nil {
-			json.NewEncoder(w).Encode("Error opening file")
+			WriteError(w, http.StatusBadRequest, "Insufficient resources")
+			log.Error(err.Error())
 			return
 		}
 
-		// when do i close file?? TODO
+		m.quarantine.Handle(file, fileHeader.Filename, fileHeader.Size)
 
-		//Quarantine file
-		//GenerateHash
-		m.quarantine.Quaratiner.RenderInert(file, fileHeader.Filename, fileHeader.Size)
-
+		if err := file.Close(); err != nil {
+			log.Error(err.Error())
+			return
+		}
 	}
+}
 
-	return
+func (m *maladaptService) DownloadFile(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func NewMaladaptService(quarantineZone string) *maladaptService {
