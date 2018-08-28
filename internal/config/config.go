@@ -41,7 +41,7 @@ func Initialize() *Config {
 	return NewConfig(
 		viper.GetString("maladapt.bind_address"),
 		viper.GetString("maladapt.quarantine_path"),
-		viper.GetInt64("maladapt.max_upload_size"),
+		viper.GetInt64("maladapt.max_upload_size")+int64(10<<20), // Reserve an additional 10 MB for non-file parts.
 	)
 }
 
