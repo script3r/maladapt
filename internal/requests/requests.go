@@ -1,6 +1,7 @@
 package requests
 
 import (
+	"encoding/json"
 	"github.com/worlvlhole/maladapt/internal/file"
 	"net/http"
 )
@@ -11,14 +12,36 @@ type maladaptService struct {
 }
 
 func (m *maladaptService) UploadFile(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(m.uploadMaxFileSize)
+	files, present := r.MultipartForm.File["file"]
+	if !present {
+		WriteError(w, http.StatusBadRequest, InvalidKeySupplied)
+		return
+	}
+
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			json.NewEncoder(w).Encode("Error opening file")
+			return
+		}
+
+		// when do i close file?? TODO
+
+		//Quarantine file
+		//GenerateHash
+		m.quarantine.Quaratiner.RenderInert(file, fileHeader.Filename, fileHeader.Size)
+
+	}
 
 	return
 }
 
 func NewMaladaptService(quarantineZone string, uploadMaxFileSize int64) *maladaptService {
 	return &maladaptService{
-		quarantine:        file.NewQuarantineAdmin(quarantineZone),
+		quarantine: file.NewQuarantineAdmin(
+			quarantineZone,
+			file.NewZipQuarantiner(quarantineZone),
+		),
 		uploadMaxFileSize: uploadMaxFileSize,
 	}
 }

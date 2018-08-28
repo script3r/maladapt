@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/worlvlhole/maladapt/internal/config"
@@ -28,7 +29,6 @@ func main() {
 
 	config := config.Initialize()
 	if err := config.Validate(); err != nil {
-
 		log.Fatal(err)
 	}
 
@@ -38,6 +38,9 @@ func main() {
 	//Create Router
 	r := chi.NewRouter()
 	r.Use(requests.NewStructuredLogger(requestLogger))
+	r.Use(middleware.AllowContentType("multipart/form-data"))
+	r.Use(requests.MaxBodySize(config.MaxUploadSize))
+	r.Use(requests.MultipartFormParse(config.MaxUploadSize))
 
 	r.Route("/file", func(r chi.Router) {
 		r.Post("/scan", service.UploadFile) // POST /file/scan
