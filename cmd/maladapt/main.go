@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/worlvlhole/maladapt/internal/config"
@@ -38,12 +37,15 @@ func main() {
 	//Create Router
 	r := chi.NewRouter()
 	r.Use(requests.NewStructuredLogger(requestLogger))
-	r.Use(middleware.AllowContentType("multipart/form-data"))
-	r.Use(requests.MaxBodySize(config.MaxUploadSize))
-	r.Use(requests.MultipartFormParse(config.MaxUploadSize))
 
 	r.Route("/file", func(r chi.Router) {
-		r.Post("/scan", service.UploadFile) // POST /file/scan
+		upload := r.Group(nil)
+		upload.Use(requests.MaxBodySize(config.MaxUploadSize))
+		upload.Use(requests.MultipartFormParse(config.MaxUploadSize))
+		upload.Post("/scan", service.UploadFile) // POST /file/scan
+
+		download := r.Group(nil)
+		download.Get("/download/{hash}", service.DownloadFile) // POST /file/scan
 	})
 
 	log.WithFields(log.Fields{"bindaddress": config.BindAddress}).Info("Server Started")
