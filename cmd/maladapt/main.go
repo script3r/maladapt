@@ -56,6 +56,7 @@ func main() {
 		upload.Use(requests.MaxBodySize(config.MaxUploadSize))
 		upload.Use(requests.MultipartFormParse(config.MaxUploadSize))
 		upload.Post("/scan", service.UploadFile) // POST /quarantine/scan
+		upload.Get("/scan", service.GetResults)  // POST /quarantine/scan
 
 		download := r.Group(nil)
 		download.Get("/download/{hash}", service.DownloadFile) // POST /quarantine/scan
