@@ -3,6 +3,8 @@ package quarantine
 import (
 	"crypto/md5"
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	log "github.com/sirupsen/logrus"
 	"github.com/worlvlhole/maladapt/internal/model"
 	"io"
@@ -28,30 +30,29 @@ func NewManager(quarantiner Quarantiner, scan *Scan) *Manager {
 	return &Manager{quarantiner, scan}
 }
 
-func (q *Manager) HandleScanRequest(input io.Reader, filename string, size int64) error {
+func (q *Manager) HandleScanRequest(input io.Reader, filename string, size int64) (model.ScanResponse, error) {
 	logger := log.WithFields(log.Fields{"func": "HandleScanRequest"})
 
 	contents, err := ioutil.ReadAll(input)
 	if err != nil {
 		logger.Error(err)
-		return err
+		return model.ScanResponse{}, err
 	}
 
 	//Compute Hashes
 	sha256 := q.computeSHA256(contents)
 	md5 := q.computeMD5(contents)
 
-	//TODO
-	// Send to go channel
-	q.Scan.Send(model.ScanMessage{Filename: filename,
-		SHA256: sha256,
-		MD5:    md5,
-		Path:   q.Quaratiner.GetLocation(),
-	})
+	resp := model.ScanResponse{Filename: filename,
+		SHA256:    hex.EncodeToString(sha256[:]),
+		MD5:       hex.EncodeToString(md5[:]),
+		Permalink: "file/scan/" + base64.RawURLEncoding.EncodeToString(sha256[:]),
+	}
 
 	//QuarantineFile
 	q.Quaratiner.RenderInert(contents, filename)
-	return nil
+
+	return resp, nil
 
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 func TestComputeSHA256(t *testing.T) {
-	q := NewQuarantine("nil", NewZipQuarantiner(""))
+	q := NewManager(NewZipQuarantiner(""), nil)
 	test := "test"
 
 	res := q.computeSHA256([]byte(test))
@@ -15,5 +15,8 @@ func TestComputeSHA256(t *testing.T) {
 	fmt.Printf("%x\n", res)
 
 	//Use for urls?
+	fmt.Println(base64.RawURLEncoding.EncodeToString(res[:]))
 	fmt.Println(base64.URLEncoding.EncodeToString(res[:]))
+	fmt.Println(res[:])
+	fmt.Println(base64.RawURLEncoding.DecodeString(base64.RawURLEncoding.EncodeToString(res[:])))
 }

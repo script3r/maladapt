@@ -10,6 +10,13 @@ type Result struct {
 	Infected bool `json:"infected" bson:"infected"`
 }
 
+type ScanResponse struct {
+	Filename  string `json:"filename" bson:"filename"`
+	SHA256    string `json:"sha256" bson:"sha256"`
+	MD5       string `json:"md5" bson:"md5"`
+	Permalink string `json:"permalink" bson:"permalink"`
+}
+
 type ScanResult struct {
 	ID        bson.ObjectId     `json:"id" bson:"_id"`
 	Filename  string            `json:"filename" bson:"filename"`

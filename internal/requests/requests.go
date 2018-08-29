@@ -28,7 +28,12 @@ func (m *maladaptService) UploadFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		m.manager.HandleScanRequest(file, fileHeader.Filename, fileHeader.Size)
+		res, err := m.manager.HandleScanRequest(file, fileHeader.Filename, fileHeader.Size)
+		if err != nil {
+
+		}
+
+		WriteSuccess(w, res)
 
 		if err := file.Close(); err != nil {
 			log.Error(err.Error())
@@ -41,6 +46,9 @@ func (m *maladaptService) DownloadFile(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (m *maladaptService) GetResults(w http.ResponseWriter, r *http.Request) {
+
+}
 func NewMaladaptService(manager *quarantine.Manager) *maladaptService {
 	return &maladaptService{manager}
 }

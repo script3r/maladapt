@@ -7,7 +7,8 @@ import (
 )
 
 type Scan struct {
-	uploadChan chan model.ScanMessage
+	uploadChan  chan model.ScanMessage
+	quarantiner Quarantiner
 }
 
 func NewScan(uploadChan chan model.ScanMessage) *Scan {
