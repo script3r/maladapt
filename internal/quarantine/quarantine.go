@@ -43,6 +43,12 @@ func (q *Manager) HandleScanRequest(input io.Reader, filename string, size int64
 	sha256 := q.computeSHA256(contents)
 	md5 := q.computeMD5(contents)
 
+	q.Scan.Send(model.ScanMessage{Filename: filename,
+		SHA256: sha256,
+		MD5:    md5,
+		Path:   q.Quaratiner.GetLocation(),
+	})
+
 	resp := model.ScanResponse{Filename: filename,
 		SHA256:    hex.EncodeToString(sha256[:]),
 		MD5:       hex.EncodeToString(md5[:]),
