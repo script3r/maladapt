@@ -10,6 +10,20 @@
   version = "v1.4.7"
 
 [[projects]]
+  branch = "master"
+  digest = "1:4b08116de0de75c041bb341686f0b139930f26cb84dfdf7641d435548114181d"
+  name = "github.com/globalsign/mgo"
+  packages = [
+    ".",
+    "bson",
+    "internal/json",
+    "internal/sasl",
+    "internal/scram",
+  ]
+  pruneopts = "UT"
+  revision = "6f9f54af1356a8f1a83e6daf0b351ba6ed6e42c6"
+
+[[projects]]
   digest = "1:4eda9f7bf70f5145b3b9ed3f18ac93e9b1a0e38906eb69e526380c34861e2b07"
   name = "github.com/go-chi/chi"
   packages = [
@@ -163,6 +177,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/globalsign/mgo",
     "github.com/go-chi/chi",
     "github.com/go-chi/chi/middleware",
     "github.com/sirupsen/logrus",

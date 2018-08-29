@@ -5,6 +5,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/worlvlhole/maladapt/internal/config"
+	"github.com/worlvlhole/maladapt/internal/model"
+	"github.com/worlvlhole/maladapt/internal/quarantine"
 	"github.com/worlvlhole/maladapt/internal/requests"
 	"log/syslog"
 	"net/http"
@@ -32,7 +34,18 @@ func main() {
 	}
 
 	//Create MaladaptService
-	service := requests.NewMaladaptService(config.QuarantinePath)
+	uploadChan := make(chan model.ScanMessage)
+
+	//Setup listen on channel
+	scan := quarantine.NewScan(uploadChan)
+	scan.Listen()
+
+	manager := quarantine.NewManager(
+		quarantine.NewZipQuarantiner(config.QuarantinePath),
+		scan,
+	)
+
+	service := requests.NewMaladaptService(manager)
 
 	//Create Router
 	r := chi.NewRouter()
@@ -42,13 +55,13 @@ func main() {
 		upload := r.Group(nil)
 		upload.Use(requests.MaxBodySize(config.MaxUploadSize))
 		upload.Use(requests.MultipartFormParse(config.MaxUploadSize))
-		upload.Post("/scan", service.UploadFile) // POST /file/scan
+		upload.Post("/scan", service.UploadFile) // POST /quarantine/scan
 
 		download := r.Group(nil)
-		download.Get("/download/{hash}", service.DownloadFile) // POST /file/scan
+		download.Get("/download/{hash}", service.DownloadFile) // POST /quarantine/scan
 	})
 
-	log.WithFields(log.Fields{"bindaddress": config.BindAddress}).Info("Server Started")
+	log.WithFields(log.Fields{"bind_address": config.BindAddress}).Info("Server Started")
 
 	log.Fatal(http.ListenAndServe(config.BindAddress, r))
 }

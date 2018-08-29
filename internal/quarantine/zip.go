@@ -1,4 +1,4 @@
-package file
+package quarantine
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 const fileNameSuffix = "_inert"
 
 type zipQuarantiner struct {
-	QuarantineZone string
+	quarantineZone string
 }
 
 func (z *zipQuarantiner) RenderInert(contents []byte, filename string) error {
@@ -19,7 +19,7 @@ func (z *zipQuarantiner) RenderInert(contents []byte, filename string) error {
 
 	//Create a File
 	inertFilename := filename + fileNameSuffix
-	file, err := os.Create(filepath.Join(z.QuarantineZone, inertFilename))
+	file, err := os.Create(filepath.Join(z.quarantineZone, inertFilename))
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -53,6 +53,9 @@ func (z *zipQuarantiner) RenderInert(contents []byte, filename string) error {
 
 	return nil
 
+}
+func (z *zipQuarantiner) GetLocation() string {
+	return z.quarantineZone
 }
 
 func (z *zipQuarantiner) RenderAlive(reader []byte, fileName string) error {

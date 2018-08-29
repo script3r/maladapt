@@ -1,4 +1,4 @@
-package file
+package quarantine
 
 import (
 	"encoding/base64"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestComputeSHA256(t *testing.T) {
-	q := NewQuarantineAdmin("nil", NewZipQuarantiner(""))
+	q := NewQuarantine("nil", NewZipQuarantiner(""))
 	test := "test"
 
 	res := q.computeSHA256([]byte(test))

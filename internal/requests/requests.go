@@ -2,12 +2,12 @@ package requests
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/worlvlhole/maladapt/internal/file"
+	"github.com/worlvlhole/maladapt/internal/quarantine"
 	"net/http"
 )
 
 type maladaptService struct {
-	quarantine *file.QuarantineAdmin
+	manager *quarantine.Manager
 }
 
 func (m *maladaptService) UploadFile(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +28,7 @@ func (m *maladaptService) UploadFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		m.quarantine.Handle(file, fileHeader.Filename, fileHeader.Size)
+		m.manager.HandleScanRequest(file, fileHeader.Filename, fileHeader.Size)
 
 		if err := file.Close(); err != nil {
 			log.Error(err.Error())
@@ -41,11 +41,6 @@ func (m *maladaptService) DownloadFile(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func NewMaladaptService(quarantineZone string) *maladaptService {
-	return &maladaptService{
-		quarantine: file.NewQuarantineAdmin(
-			quarantineZone,
-			file.NewZipQuarantiner(quarantineZone),
-		),
-	}
+func NewMaladaptService(manager *quarantine.Manager) *maladaptService {
+	return &maladaptService{manager}
 }
