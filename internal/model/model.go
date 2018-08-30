@@ -18,13 +18,13 @@ type ScanResponse struct {
 }
 
 type ScanResult struct {
-	ID        bson.ObjectId     `json:"id" bson:"_id"`
-	Filename  string            `json:"filename" bson:"filename"`
-	SHA256    string            `json:"sha256" bson:"sha256"`
-	MD5       string            `json:"md5" bson:"md5"`
-	Path      string            `json:"path" bson:"path"`
-	Permalink string            `json:"permalink" bson:"permalink"`
-	Results   map[string]Result `json:"results" bson:"results"`
+	ID        bson.ObjectId     `bson:"_id"`
+	Filename  string            `bson:"filename"`
+	SHA256    [sha256.Size]byte `bson:"sha256"`
+	MD5       [md5.Size]byte    `bson:"md5"`
+	Path      string            `bson:"path"`
+	Permalink string            `bson:"permalink"`
+	Results   map[string]Result `bson:"results"`
 }
 
 type ScanMessage struct {

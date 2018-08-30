@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	log "github.com/sirupsen/logrus"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 )
 
@@ -14,44 +14,45 @@ type zipQuarantiner struct {
 	quarantineZone string
 }
 
-func (z *zipQuarantiner) RenderInert(contents []byte, filename string) error {
+func (z *zipQuarantiner) RenderInert(contents []byte, filename string) (inertFilename string, err error) {
 	logger := log.WithFields(log.Fields{"func": "RenderInert"})
 
 	//Create a File
-	inertFilename := filename + fileNameSuffix
-	file, err := os.Create(filepath.Join(z.quarantineZone, inertFilename))
+	file, err := ioutil.TempFile(z.quarantineZone, filename)
 	if err != nil {
-		logger.Error(err.Error())
-		return err
+		return "", err
 	}
+	defer func() {
+		if err = file.Close(); err != nil {
+			logger.Error(err.Error())
+		}
+	}()
 
+	inertFilename = filepath.Base(file.Name())
 	//Create gzip writer
 	var outputb bytes.Buffer
 	gz := gzip.NewWriter(&outputb)
 	gz.Name = inertFilename
 
 	//Write contents to gzip writer
-	w, err := gz.Write(contents)
+	_, err = gz.Write(contents)
 	if err != nil {
-		logger.WithFields(log.Fields{"filename": inertFilename, "bytes_written": w}).Error(err.Error())
-		return err
+		return "", err
 	}
-
-	err = gz.Close()
-	if err != nil {
-		logger.Error(err.Error())
-		return err
-	}
+	defer func() {
+		if err = gz.Close(); err != nil {
+			logger.Error(err.Error())
+		}
+	}()
 
 	//write gzip writer contents to file
 	file.Write(outputb.Bytes())
-	file.Close()
 	if err != nil {
 		logger.Error(err.Error())
-		return err
+		return "", err
 	}
 
-	return nil
+	return inertFilename, nil
 
 }
 func (z *zipQuarantiner) GetLocation() string {

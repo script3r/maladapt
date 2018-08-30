@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"github.com/spf13/viper"
+	"github.com/worlvlhole/maladapt/pkg/storage/mongo"
 	"log"
 	"os"
 )
@@ -19,6 +20,7 @@ type Config struct {
 	BindAddress    string
 	QuarantinePath string
 	MaxUploadSize  int64
+	DBConfig       mongo.Configuration
 }
 
 func Initialize() *Config {
@@ -42,6 +44,15 @@ func Initialize() *Config {
 		viper.GetString("maladapt.bind_address"),
 		viper.GetString("maladapt.quarantine_path"),
 		viper.GetInt64("maladapt.max_upload_size")+int64(10<<20), // Reserve an additional 10 MB for non-file parts.
+		mongo.NewConfiguration(
+			viper.GetStringSlice("maladapt.mongo.hosts"),
+			viper.GetString("maladapt.mongo.databse"),
+			viper.GetString("maladapt.mongo.username"),
+			viper.GetString("maladapt.mongo.password"),
+			viper.GetBool("maladapt.mongo.verify_tls"),
+			viper.GetInt("maladapt.mongo.write_concern"),
+			viper.GetInt64("maladapt.mongo.timeout"),
+		),
 	)
 }
 
@@ -49,10 +60,11 @@ func (c *Config) Validate() error {
 	return os.MkdirAll(c.QuarantinePath, 0770)
 }
 
-func NewConfig(bindAddress string, quarantinePath string, maxUploadSize int64) *Config {
+func NewConfig(bindAddress string, quarantinePath string, maxUploadSize int64, mongoConfig mongo.Configuration) *Config {
 	return &Config{
 		BindAddress:    bindAddress,
 		QuarantinePath: quarantinePath,
 		MaxUploadSize:  maxUploadSize,
+		DBConfig:       mongoConfig,
 	}
 }

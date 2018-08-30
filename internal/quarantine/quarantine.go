@@ -15,7 +15,7 @@ type MaladaptFileMeta struct {
 }
 
 type Quarantiner interface {
-	RenderInert(input []byte, filename string) error
+	RenderInert(input []byte, filename string) (string, error)
 	RenderAlive(input []byte, filename string) error
 	GetLocation() string
 }
@@ -30,10 +30,17 @@ func NewManager(quarantiner Quarantiner, scan *Scan) *Manager {
 	return &Manager{quarantiner, scan}
 }
 
-func (q *Manager) HandleScanRequest(input io.Reader, filename string, size int64) (model.ScanResponse, error) {
+func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, size int64) (model.ScanResponse, error) {
 	logger := log.WithFields(log.Fields{"func": "HandleScanRequest"})
 
 	contents, err := ioutil.ReadAll(input)
+	if err != nil {
+		logger.Error(err)
+		return model.ScanResponse{}, err
+	}
+
+	//Quarantine File
+	inertFilename, err := q.Quaratiner.RenderInert(contents, uploadedFilename)
 	if err != nil {
 		logger.Error(err)
 		return model.ScanResponse{}, err
@@ -43,22 +50,18 @@ func (q *Manager) HandleScanRequest(input io.Reader, filename string, size int64
 	sha256 := q.computeSHA256(contents)
 	md5 := q.computeMD5(contents)
 
-	q.Scan.Send(model.ScanMessage{Filename: filename,
+	//Send to channel
+	q.Scan.Send(model.ScanMessage{Filename: inertFilename,
 		SHA256: sha256,
 		MD5:    md5,
 		Path:   q.Quaratiner.GetLocation(),
 	})
 
-	resp := model.ScanResponse{Filename: filename,
+	return model.ScanResponse{Filename: inertFilename,
 		SHA256:    hex.EncodeToString(sha256[:]),
 		MD5:       hex.EncodeToString(md5[:]),
 		Permalink: "file/scan/" + base64.RawURLEncoding.EncodeToString(sha256[:]),
-	}
-
-	//QuarantineFile
-	q.Quaratiner.RenderInert(contents, filename)
-
-	return resp, nil
+	}, nil
 
 }
 

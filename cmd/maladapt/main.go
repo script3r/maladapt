@@ -7,6 +7,7 @@ import (
 	"github.com/worlvlhole/maladapt/internal/config"
 	"github.com/worlvlhole/maladapt/internal/model"
 	"github.com/worlvlhole/maladapt/internal/quarantine"
+	"github.com/worlvlhole/maladapt/internal/repository"
 	"github.com/worlvlhole/maladapt/internal/requests"
 	"log/syslog"
 	"net/http"
@@ -34,18 +35,18 @@ func main() {
 	}
 
 	//Create MaladaptService
-	uploadChan := make(chan model.ScanMessage)
+	scan := quarantine.NewScan(
+		make(chan model.ScanMessage),
+		repository.NewScanMongoRepository(config.DBConfig))
 
-	//Setup listen on channel
-	scan := quarantine.NewScan(uploadChan)
+	//Listen on channel
 	scan.Listen()
 
-	manager := quarantine.NewManager(
-		quarantine.NewZipQuarantiner(config.QuarantinePath),
-		scan,
+	service := requests.NewMaladaptService(
+		quarantine.NewManager(
+			quarantine.NewZipQuarantiner(config.QuarantinePath),
+			scan),
 	)
-
-	service := requests.NewMaladaptService(manager)
 
 	//Create Router
 	r := chi.NewRouter()

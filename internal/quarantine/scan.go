@@ -4,30 +4,54 @@ import (
 	"encoding/hex"
 	log "github.com/sirupsen/logrus"
 	"github.com/worlvlhole/maladapt/internal/model"
+	"github.com/worlvlhole/maladapt/internal/repository"
 )
 
 type Scan struct {
-	uploadChan  chan model.ScanMessage
-	quarantiner Quarantiner
+	uploadChan     chan model.ScanMessage
+	scanRepository repository.ScanRepository
 }
 
-func NewScan(uploadChan chan model.ScanMessage) *Scan {
-	return &Scan{uploadChan: uploadChan}
+func NewScan(uploadChan chan model.ScanMessage, scanRepository repository.ScanRepository) *Scan {
+	return &Scan{uploadChan: uploadChan, scanRepository: scanRepository}
 }
 
 func (s *Scan) Listen() {
 	go func() {
 		for {
-			msg := <-s.uploadChan
-			s.preFlightCheck(msg)
+			s.handleMessage(<-s.uploadChan)
 		}
 	}()
 }
 
-func (s *Scan) preFlightCheck(msg model.ScanMessage) error {
+func (s *Scan) handleMessage(msg model.ScanMessage) {
+	logger := log.WithFields(log.Fields{"func": "handleMessage"})
+
+	seenBefore, err := s.preFlightCheck(msg)
+	if err != nil {
+		logger.WithFields(log.Fields{"filename": msg.Filename}).Error(err)
+		return
+	}
+
+	if seenBefore {
+		logger.Info("File has been checked before")
+		return
+	}
+
+	//Send to rabbitmq
+
+}
+
+//Check hashes from some db to make sure we don't perform unnecessary work.
+func (s *Scan) preFlightCheck(msg model.ScanMessage) (bool, error) {
 	logger := log.WithFields(log.Fields{"func": "PreFlighCheck"})
+
+	if res, err := s.scanRepository.FindBySHA256(msg.SHA256); err != nil || res == nil {
+		return false, nil
+	}
+
 	logger.Info()
-	return nil
+	return true, nil
 }
 
 func (s *Scan) Send(msg model.ScanMessage) {
