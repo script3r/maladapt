@@ -8,4 +8,4 @@ COPY ./configure.js /etc/mongo/
 
 EXPOSE 27017
 
-CMD ["./etc/mongo/start.sh"]
+CMD ["mongod", "--config", "/etc/mongo/mongo.yaml"]
