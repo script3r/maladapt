@@ -6,10 +6,17 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	log "github.com/sirupsen/logrus"
-	"github.com/worlvlhole/maladapt/internal/model"
+	"github.com/worlvlhole/maladapt/pkg/message/rabbit"
 	"io"
 	"io/ioutil"
 )
+
+type ScanResponse struct {
+	Filename  string `json:"filename" bson:"filename"`
+	SHA256    string `json:"sha256" bson:"sha256"`
+	MD5       string `json:"md5" bson:"md5"`
+	Permalink string `json:"permalink" bson:"permalink"`
+}
 
 type MaladaptFileMeta struct {
 }
@@ -30,20 +37,20 @@ func NewManager(quarantiner Quarantiner, scan *Scan) *Manager {
 	return &Manager{quarantiner, scan}
 }
 
-func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, size int64) (model.ScanResponse, error) {
+func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, size int64) (ScanResponse, error) {
 	logger := log.WithFields(log.Fields{"func": "HandleScanRequest"})
 
 	contents, err := ioutil.ReadAll(input)
 	if err != nil {
 		logger.Error(err)
-		return model.ScanResponse{}, err
+		return ScanResponse{}, err
 	}
 
 	//Quarantine File
 	inertFilename, err := q.Quaratiner.RenderInert(contents, uploadedFilename)
 	if err != nil {
 		logger.Error(err)
-		return model.ScanResponse{}, err
+		return ScanResponse{}, err
 	}
 
 	//Compute Hashes
@@ -51,13 +58,13 @@ func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, si
 	md5 := q.computeMD5(contents)
 
 	//Send to channel
-	go q.Scan.HandleMessage(model.ScanMessage{Filename: inertFilename,
-		SHA256: sha256,
-		MD5:    md5,
-		Path:   q.Quaratiner.GetLocation(),
-	})
+	go q.Scan.HandleMessage(rabbit.NewScanMessage(inertFilename,
+		sha256,
+		md5,
+		q.Quaratiner.GetLocation(),
+	))
 
-	return model.ScanResponse{Filename: inertFilename,
+	return ScanResponse{Filename: inertFilename,
 		SHA256:    hex.EncodeToString(sha256[:]),
 		MD5:       hex.EncodeToString(md5[:]),
 		Permalink: "file/scan/" + base64.RawURLEncoding.EncodeToString(sha256[:]),

@@ -10,13 +10,6 @@ type Result struct {
 	Infected bool `json:"infected" bson:"infected"`
 }
 
-type ScanResponse struct {
-	Filename  string `json:"filename" bson:"filename"`
-	SHA256    string `json:"sha256" bson:"sha256"`
-	MD5       string `json:"md5" bson:"md5"`
-	Permalink string `json:"permalink" bson:"permalink"`
-}
-
 type ScanResult struct {
 	ID        bson.ObjectId     `bson:"_id"`
 	Filename  string            `bson:"filename"`
@@ -25,11 +18,4 @@ type ScanResult struct {
 	Path      string            `bson:"path"`
 	Permalink string            `bson:"permalink"`
 	Results   map[string]Result `bson:"results"`
-}
-
-type ScanMessage struct {
-	Filename string
-	SHA256   [sha256.Size]byte
-	MD5      [md5.Size]byte
-	Path     string
 }

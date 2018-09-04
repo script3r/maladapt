@@ -2,7 +2,7 @@ package requests
 
 import (
 	"encoding/json"
-	"github.com/worlvlhole/maladapt/internal/model"
+	"github.com/worlvlhole/maladapt/internal/quarantine"
 	"net/http"
 	"time"
 )
@@ -34,7 +34,7 @@ func NewResponseError(code int, message string) responseError {
 	}
 }
 
-func NewResponseSuccess(message model.ScanResponse) responseSuccess {
+func NewResponseSuccess(message quarantine.ScanResponse) responseSuccess {
 	return responseSuccess{
 		Success: Response{
 			Code:    http.StatusOK,
@@ -48,6 +48,6 @@ func WriteError(w http.ResponseWriter, code int, message string) {
 	json.NewEncoder(w).Encode(NewResponseError(code, message))
 }
 
-func WriteSuccess(w http.ResponseWriter, message model.ScanResponse) {
+func WriteSuccess(w http.ResponseWriter, message quarantine.ScanResponse) {
 	json.NewEncoder(w).Encode(NewResponseSuccess(message))
 }

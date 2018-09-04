@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"github.com/spf13/viper"
+	"github.com/worlvlhole/maladapt/pkg/message/rabbit"
 	"github.com/worlvlhole/maladapt/pkg/storage/mongo"
 	"log"
 	"os"
@@ -21,6 +22,7 @@ type Config struct {
 	QuarantinePath string
 	MaxUploadSize  int64
 	DBConfig       mongo.Configuration
+	RabbitConfig   rabbit.Configuration
 }
 
 func Initialize() *Config {
@@ -53,6 +55,12 @@ func Initialize() *Config {
 			viper.GetInt("maladapt.mongo.write_concern"),
 			viper.GetInt64("maladapt.mongo.timeout"),
 		),
+		rabbit.NewConfiguration(
+			viper.GetString("maladapt.rabbit.amqp_url"),
+			viper.GetString("maladapt.rabbit.exchange"),
+			viper.GetString("maladapt.rabbit.exchange_type"),
+			viper.GetInt("maladapt.rabbit.connect_retry_limit"),
+		),
 	)
 }
 
@@ -60,11 +68,12 @@ func (c *Config) Validate() error {
 	return os.MkdirAll(c.QuarantinePath, 0770)
 }
 
-func NewConfig(bindAddress string, quarantinePath string, maxUploadSize int64, mongoConfig mongo.Configuration) *Config {
+func NewConfig(bindAddress string, quarantinePath string, maxUploadSize int64, mongoConfig mongo.Configuration, rabbitConfig rabbit.Configuration) *Config {
 	return &Config{
 		BindAddress:    bindAddress,
 		QuarantinePath: quarantinePath,
 		MaxUploadSize:  maxUploadSize,
 		DBConfig:       mongoConfig,
+		RabbitConfig:   rabbitConfig,
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/worlvlhole/maladapt/internal/quarantine"
 	"github.com/worlvlhole/maladapt/internal/repository"
 	"github.com/worlvlhole/maladapt/internal/requests"
+	"github.com/worlvlhole/maladapt/pkg/message/rabbit"
 	"log/syslog"
 	"net/http"
 )
@@ -33,9 +34,17 @@ func main() {
 		log.Fatal(err)
 	}
 
+	//Producer Rabbit
+	producer := rabbit.NewProducer(rabbit.NewRabbit(config.RabbitConfig))
+	if err := producer.Connect(); err != nil {
+		log.Fatal("Rabbitmq could not connect: ", err)
+	}
+
 	//Create MaladaptService
 	scan := quarantine.NewScan(
-		repository.NewScanMongoRepository(config.DBConfig))
+		repository.NewScanMongoRepository(config.DBConfig),
+		producer,
+	)
 
 	service := requests.NewMaladaptService(
 		quarantine.NewManager(
