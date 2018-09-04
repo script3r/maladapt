@@ -5,7 +5,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/worlvlhole/maladapt/internal/config"
-	"github.com/worlvlhole/maladapt/internal/model"
 	"github.com/worlvlhole/maladapt/internal/quarantine"
 	"github.com/worlvlhole/maladapt/internal/repository"
 	"github.com/worlvlhole/maladapt/internal/requests"
@@ -36,11 +35,7 @@ func main() {
 
 	//Create MaladaptService
 	scan := quarantine.NewScan(
-		make(chan model.ScanMessage),
 		repository.NewScanMongoRepository(config.DBConfig))
-
-	//Listen on channel
-	scan.Listen()
 
 	service := requests.NewMaladaptService(
 		quarantine.NewManager(

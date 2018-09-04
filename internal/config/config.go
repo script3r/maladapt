@@ -46,7 +46,7 @@ func Initialize() *Config {
 		viper.GetInt64("maladapt.max_upload_size")+int64(10<<20), // Reserve an additional 10 MB for non-file parts.
 		mongo.NewConfiguration(
 			viper.GetStringSlice("maladapt.mongo.hosts"),
-			viper.GetString("maladapt.mongo.databse"),
+			viper.GetString("maladapt.mongo.database"),
 			viper.GetString("maladapt.mongo.username"),
 			viper.GetString("maladapt.mongo.password"),
 			viper.GetBool("maladapt.mongo.verify_tls"),

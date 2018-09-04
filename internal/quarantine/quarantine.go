@@ -51,7 +51,7 @@ func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, si
 	md5 := q.computeMD5(contents)
 
 	//Send to channel
-	q.Scan.Send(model.ScanMessage{Filename: inertFilename,
+	go q.Scan.HandleMessage(model.ScanMessage{Filename: inertFilename,
 		SHA256: sha256,
 		MD5:    md5,
 		Path:   q.Quaratiner.GetLocation(),

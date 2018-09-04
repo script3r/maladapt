@@ -13,7 +13,7 @@ type MongoClient struct {
 }
 
 func (m *MongoClient) Session() (*mgo.Session, error) {
-	logger := log.WithFields(log.Fields{"func": "Sesson"})
+	logger := log.WithFields(log.Fields{"func": "Session"})
 
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
 		Addrs:    m.config.Hosts,
@@ -45,6 +45,17 @@ func (m *MongoClient) Session() (*mgo.Session, error) {
 	session.EnsureSafe(&mgo.Safe{W: m.config.WriteConcern})
 
 	return session, nil
+}
+
+func (m *MongoClient) Database() (*mgo.Session, *mgo.Database, error) {
+	logger := log.WithFields(log.Fields{"func": "Database"})
+	s, err := m.Session()
+	if err != nil {
+		logger.Error(err)
+		return nil, nil, err
+	}
+
+	return s, s.DB(m.config.Database), nil
 }
 
 func NewMongoClient(config Configuration) *MongoClient {
