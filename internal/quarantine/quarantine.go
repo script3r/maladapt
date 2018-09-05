@@ -57,7 +57,7 @@ func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, si
 	sha256 := q.computeSHA256(contents)
 	md5 := q.computeMD5(contents)
 
-	//Send to channel
+	//Send rabbitmq
 	go q.Scan.HandleMessage(rabbit.NewScanMessage(inertFilename,
 		sha256,
 		md5,
