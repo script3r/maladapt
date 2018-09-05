@@ -26,12 +26,12 @@ type ScanRepository interface {
 }
 
 type ScanMongoRepository struct {
-	mongoc *mongo.MongoClient
+	mongoc *mongo.Client
 }
 
 func NewScanMongoRepository(config mongo.Configuration) ScanRepository {
 	return &ScanMongoRepository{
-		mongo.NewMongoClient(config),
+		mongo.NewClient(config),
 	}
 }
 

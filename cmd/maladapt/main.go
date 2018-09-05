@@ -40,16 +40,11 @@ func main() {
 		log.Fatal("Rabbitmq could not connect: ", err)
 	}
 
-	//Create MaladaptService
-	scan := quarantine.NewScan(
-		repository.NewScanMongoRepository(config.DBConfig),
-		producer,
-	)
-
 	service := requests.NewMaladaptService(
 		quarantine.NewManager(
 			quarantine.NewZipQuarantiner(config.QuarantinePath),
-			scan),
+			repository.NewScanMongoRepository(config.DBConfig),
+			producer),
 	)
 
 	//Create Router

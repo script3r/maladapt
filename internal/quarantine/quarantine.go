@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	log "github.com/sirupsen/logrus"
+	"github.com/worlvlhole/maladapt/internal/repository"
 	"github.com/worlvlhole/maladapt/pkg/message/rabbit"
 	"io"
 	"io/ioutil"
@@ -18,9 +19,6 @@ type ScanResponse struct {
 	Permalink string `json:"permalink" bson:"permalink"`
 }
 
-type MaladaptFileMeta struct {
-}
-
 type Quarantiner interface {
 	RenderInert(input []byte, filename string) (string, error)
 	RenderAlive(input []byte, filename string) error
@@ -28,17 +26,21 @@ type Quarantiner interface {
 }
 
 type Manager struct {
-	Quaratiner Quarantiner
-	Scan       *Scan
+	quarantiner    Quarantiner
+	producer       *rabbit.Producer
+	scanRepository repository.ScanRepository
 }
 
-func NewManager(quarantiner Quarantiner, scan *Scan) *Manager {
-	//listen on channel
-	return &Manager{quarantiner, scan}
+func NewManager(quarantiner Quarantiner, scan repository.ScanRepository, producer *rabbit.Producer) *Manager {
+	return &Manager{
+		quarantiner:    quarantiner,
+		producer:       producer,
+		scanRepository: scan,
+	}
 }
 
-func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, size int64) (ScanResponse, error) {
-	logger := log.WithFields(log.Fields{"func": "HandleScanRequest"})
+func (q *Manager) HandleRequest(input io.Reader, uploadedFilename string, size int64) (ScanResponse, error) {
+	logger := log.WithFields(log.Fields{"func": "HandleRequest"})
 
 	contents, err := ioutil.ReadAll(input)
 	if err != nil {
@@ -47,7 +49,7 @@ func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, si
 	}
 
 	//Quarantine File
-	inertFilename, err := q.Quaratiner.RenderInert(contents, uploadedFilename)
+	inertFilename, err := q.quarantiner.RenderInert(contents, uploadedFilename)
 	if err != nil {
 		logger.Error(err)
 		return ScanResponse{}, err
@@ -58,10 +60,10 @@ func (q *Manager) HandleScanRequest(input io.Reader, uploadedFilename string, si
 	md5 := q.computeMD5(contents)
 
 	//Send rabbitmq
-	go q.Scan.HandleMessage(rabbit.NewScanMessage(inertFilename,
+	go q.SendToScanners(rabbit.NewScanMessage(inertFilename,
 		sha256,
 		md5,
-		q.Quaratiner.GetLocation(),
+		q.quarantiner.GetLocation(),
 	))
 
 	return ScanResponse{Filename: inertFilename,
@@ -78,4 +80,15 @@ func (q *Manager) computeSHA256(input []byte) [sha256.Size]byte {
 
 func (q *Manager) computeMD5(input []byte) [md5.Size]byte {
 	return md5.Sum(input)
+}
+
+func (q *Manager) SendToScanners(msg *rabbit.ScanMessage) {
+	logger := log.WithFields(log.Fields{"func": "SendToScanners"})
+	logger.WithFields(log.Fields{
+		"filename": msg.Filename,
+		"sha256":   msg.SHA256,
+		"md5":      msg.MD5}).Info("Sending message to rabbit")
+
+	q.producer.Publish(msg)
+
 }

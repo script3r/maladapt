@@ -15,7 +15,7 @@ type Configuration struct {
 }
 
 func NewConfiguration(hosts []string, database string, username string, password string, verifyTLS bool, writeConcern int, timeout int64) Configuration {
-	log.WithFields(log.Fields{"func": "NewConfiguraton", "hosts": hosts, "database": database}).Info()
+	log.WithFields(log.Fields{"func": "NewConfiguration", "hosts": hosts, "database": database}).Info()
 	return Configuration{
 		Hosts:        hosts,
 		Database:     database,

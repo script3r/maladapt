@@ -8,11 +8,11 @@ import (
 	"time"
 )
 
-type MongoClient struct {
+type Client struct {
 	config Configuration
 }
 
-func (m *MongoClient) Session() (*mgo.Session, error) {
+func (m *Client) Session() (*mgo.Session, error) {
 	logger := log.WithFields(log.Fields{"func": "Session"})
 
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
@@ -47,7 +47,7 @@ func (m *MongoClient) Session() (*mgo.Session, error) {
 	return session, nil
 }
 
-func (m *MongoClient) Database() (*mgo.Session, *mgo.Database, error) {
+func (m *Client) Database() (*mgo.Session, *mgo.Database, error) {
 	logger := log.WithFields(log.Fields{"func": "Database"})
 	s, err := m.Session()
 	if err != nil {
@@ -58,6 +58,6 @@ func (m *MongoClient) Database() (*mgo.Session, *mgo.Database, error) {
 	return s, s.DB(m.config.Database), nil
 }
 
-func NewMongoClient(config Configuration) *MongoClient {
-	return &MongoClient{config}
+func NewClient(config Configuration) *Client {
+	return &Client{config}
 }
