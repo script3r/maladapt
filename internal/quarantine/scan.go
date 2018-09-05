@@ -23,7 +23,7 @@ func (s *Scan) HandleMessage(msg *rabbit.ScanMessage) {
 	logger.WithFields(log.Fields{
 		"filename": msg.Filename,
 		"sha256":   msg.SHA256,
-		"md5":      msg.MD5}).Info()
+		"md5":      msg.MD5}).Info("Sending message to rabbit")
 
 	//Send to rabbitmq
 	s.producer.Publish(msg)
